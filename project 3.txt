@@ -1,0 +1,156 @@
+import java.io.*;
+import java.util.*;
+
+class Task {
+    String title;
+    Date dueDate;
+    boolean isCompleted;
+
+    Task(String title, Date dueDate) {
+        this.title = title;
+        this.dueDate = dueDate;
+        this.isCompleted = false;
+    }
+
+    @Override
+    public String toString() {
+        String dueDateString = (dueDate != null) ? dueDate.toString() : "No due date";
+        return String.format("[%s] %s (Due: %s)", isCompleted ? "X" : " ", title, dueDateString);
+    }
+}
+
+       class ToDoListApp {
+    private List<Task> tasks;
+    private final String FILE_NAME = "tasks.txt";
+
+    public ToDoListApp() {
+        tasks = new ArrayList<>();
+        loadTasks();
+    }
+
+    public void addTask(String title, Date dueDate) {
+        tasks.add(new Task(title, dueDate));
+        saveTasks();
+    }
+
+    public void removeTask(int index) {
+        if (index >= 0 && index < tasks.size()) {
+            tasks.remove(index);
+            saveTasks();
+        } else {
+            System.out.println("Invalid task index.");
+        }
+    }
+
+    public void markTaskAsCompleted(int index) {
+        if (index >= 0 && index < tasks.size()) {
+            tasks.get(index).isCompleted = true;
+            saveTasks();
+        } else {
+            System.out.println("Invalid task index.");
+        }
+    }
+
+    public void listPendingTasks() {
+        System.out.println("Pending Tasks:");
+        for (int i = 0; i < tasks.size(); i++) {
+            if (!tasks.get(i).isCompleted) {
+                System.out.println(i + ": " + tasks.get(i));
+            }
+        }
+    }
+
+    public void listCompletedTasks() {
+        System.out.println("Completed Tasks:");
+        for (int i = 0; i < tasks.size(); i++) {
+            if (tasks.get(i).isCompleted) {
+                System.out.println(i + ": " + tasks.get(i));
+            }
+        }
+    }
+
+    private void saveTasks() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
+            for (Task task : tasks) {
+                writer.write(task.title + "|" + task.isCompleted + "|" + (task.dueDate != null ? task.dueDate.getTime() : "0"));
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving tasks: " + e.getMessage());
+        }
+    }
+
+    private void loadTasks() {
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split("\\|");
+                String title = parts[0];
+                boolean isCompleted = Boolean.parseBoolean(parts[1]);
+                long dueDateMillis = Long.parseLong(parts[2]);
+                Date dueDate = (dueDateMillis != 0) ? new Date(dueDateMillis) : null;
+                
+                Task task = new Task(title, dueDate);
+                task.isCompleted = isCompleted;
+                tasks.add(task);
+            }
+        } catch (IOException e) {
+            System.out.println("Error loading tasks: " + e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        ToDoListApp todoList = new ToDoListApp();
+        Scanner scanner = new Scanner(System.in);
+        int choice;
+
+        do {
+            System.out.println("\n1. Add Task");
+            System.out.println("2. Remove Task");
+            System.out.println("3. Mark Task as Completed");
+            System.out.println("4. List Pending Tasks");
+            System.out.println("5. List Completed Tasks");
+            System.out.println("6. Exit");
+            System.out.print("Choose an option: ");
+            choice = scanner.nextInt();
+            scanner.nextLine();  // consume newline
+
+            switch (choice) {
+                case 1: // Add Task
+                    System.out.print("Enter task title: ");
+                    String title = scanner.nextLine();
+                    System.out.print("Enter due date (empty for none): ");
+                    String dueDateInput = scanner.nextLine();
+                    Date dueDate = null;
+                    if (!dueDateInput.trim().isEmpty()) {
+                        dueDate = new Date();
+                    }
+                    todoList.addTask(title, dueDate);
+                    break;
+                case 2: // Remove Task
+                    System.out.print("Enter task index to remove: ");
+                    int removeIndex = scanner.nextInt();
+                    todoList.removeTask(removeIndex);
+                    break;
+                case 3: // Mark Task as Completed
+                    System.out.print("Enter task index to mark as completed: ");
+                    int completeIndex = scanner.nextInt();
+                    todoList.markTaskAsCompleted(completeIndex);
+                    break;
+                case 4: // List Pending Tasks
+                    todoList.listPendingTasks();
+                    break;
+                case 5: // List Completed Tasks
+                    todoList.listCompletedTasks();
+                    break;
+                case 6: // Exit
+                    System.out.println("Exiting the application.");
+                    break;
+                default:
+                    System.out.println("Invalid option. Please try again.");
+            }
+        } while (choice != 6);
+
+        scanner.close();
+    }
+}
